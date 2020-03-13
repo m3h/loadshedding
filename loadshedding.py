@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 AREA='3A'
 MIN_OFFSET = 4 # minutes
-MAX_OFFSET = 7 # minutes
+MAX_OFFSET = 11 # minutes
+
+NOTIFICATION_TIMEOUT = 120
 CMD = "sudo /usr/sbin/s2disk"
+CMD = "echo hello"
 
 API_URL = "http://loadshedding.eskom.co.za/LoadShedding/GetStatus"
 
@@ -15,17 +18,22 @@ def log(txt):
         f.write('\n')
         f.write(txt)
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 import urllib.request
 
+from gi.repository import Gtk
+import notify2
 import pandas as pd
 
 def main():
+    os.environ['XAUTHORITY'] = '/home/reece/.Xauthority'
+    os.environ['DISPLAY'] = ':0'
     curr_stage = try_get_stage(API_URL)
     date_now = datetime.now()
     sched = pd.read_csv(SCHEDULE_CSV, sep=';')
 
+    date_now = date_now.replace(hour=3, minute=55)
     day = str(date_now.day)
     sched_s = sched[sched['stage'] <= curr_stage]
     sched_d_a = sched_s[sched_s[day] == AREA]
@@ -40,10 +48,17 @@ def main():
 
         if start <= now + MIN_OFFSET <= end or start <= now + MAX_OFFSET <= end:
             # We're shedding now
-            txt = 'Executing loadshedding cmd "{}"'.format(CMD)
-            log(txt)
-            print(txt)
-            os.system(CMD)
+
+            if get_override_status(NOTIFICATION_TIMEOUT):
+                txt = 'User cancelled loadshedding cmd "{}"'.format(CMD)
+                log(txt)
+                print(txt)
+            else:
+                txt = 'Executing loadshedding cmd "{}"'.format(CMD)
+                log(txt)
+                print(txt)
+
+                os.system(CMD)
             exit()
     # We're not shedding now
 
@@ -70,6 +85,36 @@ def time_to_min(time: str):
 
     return hour*60 + minute
 
+
+def get_override_status(timeout: int):
+    override_shutdown = False
+    def default_action_cb(n, action):
+        nonlocal override_shutdown
+        if action == 'default':
+            n.close()
+            n = notify2.Notification("Cancelling shutdown!")
+            n.show()
+            print("Cancelling shutdown")
+            override_shutdown = True
+    def closed_cb(n):
+        Gtk.main_quit()
+
+    if not notify2.init("loadshedding.py", mainloop='glib'):
+        return True
+    n = notify2.Notification("Cancel loadshedding shutdown?")
+
+    server_capabilities = notify2.get_server_caps()
+    if 'actions' in server_capabilities:
+        n.add_action('default', "Cancel shutdown", default_action_cb)
+    n.connect('closed', closed_cb)
+
+    n.timeout = timeout*1000
+    n.set_urgency(notify2.URGENCY_CRITICAL)
+    if not n.show():
+        return True
+
+    Gtk.main()
+    return override_shutdown
 
 if __name__ == "__main__":
     main()
