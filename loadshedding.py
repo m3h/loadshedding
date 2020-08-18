@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-AREA='3A'
+AREA='8B'
 MIN_OFFSET = 4 # minutes
 MAX_OFFSET = 17 # minutes
 
@@ -21,6 +21,10 @@ def log(txt):
 from datetime import datetime, timedelta
 import os
 import urllib.request
+import ssl
+# Add support for old TLS
+ctx = ssl.create_default_context()
+ctx.set_ciphers('DEFAULT@SECLEVEL=1')
 
 from gi.repository import Gtk
 import notify2
@@ -77,7 +81,7 @@ def try_get_stage(api_url: str, attempts=20):
     # We'll try x times
     for x in range(attempts):
         try:
-            req = urllib.request.urlopen(api_url, timeout=10)
+            req = urllib.request.urlopen(api_url, timeout=10, context=ctx)
             stage_str = req.read().decode()
             stage = int(stage_str) - 1 # The API has +1
 
@@ -85,8 +89,8 @@ def try_get_stage(api_url: str, attempts=20):
                 f.write('\n')
                 f.write("{};{}".format(datetime.now(), stage))
             return stage
-        except:
-            pass
+        except Exception as e:
+            print(str(e))
     print('Failure calling API, after {} attempts'.format(attempts))
     exit()
 
