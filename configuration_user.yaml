@@ -1,3 +1,3 @@
 AREA: '8B'
 CMD: "sudo /usr/sbin/s2disk"
-SCHEDULE_CSV: 'schedules/load_shedding_cp.csv'
+SCHEDULE_CSV: 'schedules/load_shedding_city_power.csv'
