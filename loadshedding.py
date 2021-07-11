@@ -1,17 +1,5 @@
 #!/usr/bin/env python3
-AREA='8B'
-MIN_OFFSET = 4 # minutes
-MAX_OFFSET = 17 # minutes
-
-NOTIFICATION_TIMEOUT = 120
-CMD = "sudo /usr/sbin/s2disk"
-
-API_URL = "http://loadshedding.eskom.co.za/LoadShedding/GetStatus"
-
-SCHEDULE_CSV = '/home/reece/scripts/loadshedding/load_shedding_cp.csv'
-LOGSTAGE = "/home/reece/scripts/loadshedding/stagelog.txt"
-LOG = "/home/reece/scripts/loadshedding/log.log"
-
+# TODO Can replace this with Python's built in logging
 def log(txt):
     with open(LOG, 'a') as f:
         f.write('\n')
@@ -22,6 +10,8 @@ from datetime import datetime, timedelta
 import os
 import urllib.request
 import ssl
+import configuration
+
 # Add support for old TLS
 ctx = ssl.create_default_context()
 ctx.set_ciphers('DEFAULT@SECLEVEL=1')
@@ -31,9 +21,9 @@ import notify2
 import pandas as pd
 
 def main():
-    curr_stage = try_get_stage(API_URL)
+    curr_stage = try_get_stage(configuration_system['API_URL'])
     date_now = datetime.now()
-    sched = pd.read_csv(SCHEDULE_CSV, sep=';')
+    sched = pd.read_csv(configuration_user['SCHEDULE_CSV'], sep=';')
 
     day = str(date_now.day)
     date_tomorrow = date_now + timedelta(days=1)
@@ -44,36 +34,36 @@ def main():
         end = time_to_min(row['end'])
         now = time_to_min("{}:{}".format(date_now.hour, date_now.minute))
         # The schedule, and therefore the csv, loops over to 00:30 for the next morning.
-        # We wanna comparse fairly
+        # We wanna compare fairly
         if end < start:
             end += 24*60
 
         if tomorrow:
             start += 24*60
             end += 24*60
-        if start <= now + MIN_OFFSET <= end or start <= now + MAX_OFFSET <= end:
+        if start <= now + configuration_system['MIN_OFFSET'] <= end or start <= now + configuration_system['MAX_OFFSET'] <= end:
             # We're shedding now
 
-            if get_override_status(NOTIFICATION_TIMEOUT):
-                txt = 'User cancelled loadshedding cmd "{}"'.format(CMD)
+            if get_override_status(configuration_system['NOTIFICATION_TIMEOUT']):
+                txt = 'User cancelled loadshedding cmd "{}"'.format(configuration_user['CMD'])
                 log(txt)
                 print(txt)
             else:
-                txt = 'Executing loadshedding cmd "{}"'.format(CMD)
+                txt = 'Executing loadshedding cmd "{}"'.format(configuration_user['CMD'])
                 log(txt)
                 print(txt)
 
-                os.system(CMD)
+                os.system(configuration_user['CMD'])
             exit()
         # We're not shedding now
     for _, row in sched.iterrows():
         if not row['stage'] <= curr_stage:
             continue
 
-        if row[day] == AREA:
+        if row[day] == configuration_user['AREA']:
             check_row(row, tomorrow=False)
 
-        if row[day_tomorrow] == AREA:
+        if row[day_tomorrow] == configuration_user['AREA']:
             check_row(row, tomorrow=True)
 
 
@@ -85,7 +75,7 @@ def try_get_stage(api_url: str, attempts=20):
             stage_str = req.read().decode()
             stage = int(stage_str) - 1 # The API has +1
 
-            with open(LOGSTAGE, 'a') as f:
+            with open(configuration_system['LOGSTAGE'], 'a') as f:
                 f.write('\n')
                 f.write("{};{}".format(datetime.now(), stage))
             return stage
@@ -131,4 +121,33 @@ def get_override_status(timeout: int):
     return override_shutdown
 
 if __name__ == "__main__":
+    try:
+        configuration_system = configuration.read_configuration_system('configuration_system.yaml')
+    except FileNotFoundError as e:
+        LOG = 'crash_log.log'
+        txt = f'Configuration file does not exist\n\t{str(e)}'
+        print(txt)
+        log(txt)
+        exit()
+    except configuration.MissingKeyError as e:
+        LOG = 'crash_log.log'
+        txt = str(e)
+        print(txt)
+        log(txt)
+        exit()
+
+    LOG = configuration_system['LOG']
+
+    try:
+        configuration_user = configuration.read_configuration_user('configuration_user.yaml')
+    except FileNotFoundError as e:
+        txt = f'Configuration file does not exist\n\t{str(e)}'
+        log(txt)
+        exit()
+    except configuration.MissingKeyError as e:
+        txt = str(e)
+        print(txt)
+        log(txt)
+        exit()
+
     main()

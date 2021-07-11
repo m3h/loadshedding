@@ -1,0 +1,6 @@
+API_URL: "http://loadshedding.eskom.co.za/LoadShedding/GetStatus"
+LOGSTAGE: "stagelog.txt"
+LOG: "log.log"
+NOTIFICATION_TIMEOUT: 120
+MIN_OFFSET: 4 # minutes
+MAX_OFFSET: 17 # minutes
