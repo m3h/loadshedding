@@ -1,3 +1,12 @@
+# Loadshedding area
+# Should correspond to the areas beneath the stages in the SCHEDULE_CSV file
+# Area names are those of the original source documentation
 AREA: '8B'
-CMD: "sudo /usr/sbin/s2disk"
+# Loadshedding schedule
 SCHEDULE_CSV: 'schedules/load_shedding_city_power.csv'
+
+# Command to run just before or during loadshedding
+# Examples:
+#   "sudo /usr/sbin/s2disk" - Hibernate
+#   "sudo poweroff" - Shutdown
+CMD: "sudo /usr/sbin/s2disk"
