@@ -12,13 +12,11 @@ import urllib.request
 import ssl
 import configuration
 
+import pandas as pd
+
 # Add support for old TLS
 ctx = ssl.create_default_context()
 ctx.set_ciphers('DEFAULT@SECLEVEL=1')
-
-from gi.repository import Gtk
-import notify2
-import pandas as pd
 
 def main():
     curr_stage = try_get_stage(configuration_system['API_URL'])
@@ -44,7 +42,8 @@ def main():
         if start <= now + configuration_system['MIN_OFFSET'] <= end or start <= now + configuration_system['MAX_OFFSET'] <= end:
             # We're shedding now
 
-            if get_override_status(configuration_system['NOTIFICATION_TIMEOUT']):
+            if (configuration_user['GTK_NOTIFICATION'] and 
+                    get_override_status(configuration_system['NOTIFICATION_TIMEOUT'])):
                 txt = 'User cancelled loadshedding cmd "{}"'.format(configuration_user['CMD'])
                 log(txt)
                 print(txt)
@@ -149,5 +148,10 @@ if __name__ == "__main__":
         print(txt)
         log(txt)
         exit()
+
+    # Imports according to configuration files
+    if configuration_user['GTK_NOTIFICATION']:
+        from gi.repository import Gtk
+        import notify2
 
     main()
