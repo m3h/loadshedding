@@ -18,52 +18,65 @@ import pandas as pd
 ctx = ssl.create_default_context()
 ctx.set_ciphers('DEFAULT@SECLEVEL=1')
 
+
 def main():
     curr_stage = try_get_stage(configuration_system['API_URL'])
     date_now = datetime.now()
     sched = pd.read_csv(configuration_user['SCHEDULE_CSV'], sep=';')
 
+    shedding = check_shedding(curr_stage, sched, configuration_user, date_now)
+
+    if not shedding:
+        return False
+
+    if (configuration_user['GTK_NOTIFICATION'] and get_override_status(configuration_system['NOTIFICATION_TIMEOUT'])):
+        txt = 'User cancelled loadshedding cmd "{}"'.format(configuration_user['CMD'])
+        log(txt)
+        print(txt)
+    else:
+        txt = 'Executing loadshedding cmd "{}"'.format(configuration_user['CMD'])
+        log(txt)
+        print(txt)
+
+        os.system(configuration_user['CMD'])
+    exit()
+
+
+def check_row(row, date_now, tomorrow, configuration_system):
+    start = time_to_min(row['start'])
+    end = time_to_min(row['end'])
+    now = time_to_min("{}:{}".format(date_now.hour, date_now.minute))
+    # The schedule, and therefore the csv, loops over to 00:30 for the next morning.
+    # We wanna compare fairly
+    if end < start:
+        end += 24*60
+
+    if tomorrow:
+        start += 24*60
+        end += 24*60
+    if start <= now + configuration_system['MIN_OFFSET'] <= end or start <= now + configuration_system['MAX_OFFSET'] <= end:
+        # We're shedding now
+        return True
+
+    return False
+
+
+def check_shedding(curr_stage, sched, configuration_user, date_now):
     day = str(date_now.day)
     date_tomorrow = date_now + timedelta(days=1)
     day_tomorrow = str(date_tomorrow.day)
 
-    def check_row(row, tomorrow):
-        start = time_to_min(row['start'])
-        end = time_to_min(row['end'])
-        now = time_to_min("{}:{}".format(date_now.hour, date_now.minute))
-        # The schedule, and therefore the csv, loops over to 00:30 for the next morning.
-        # We wanna compare fairly
-        if end < start:
-            end += 24*60
-
-        if tomorrow:
-            start += 24*60
-            end += 24*60
-        if start <= now + configuration_system['MIN_OFFSET'] <= end or start <= now + configuration_system['MAX_OFFSET'] <= end:
-            # We're shedding now
-
-            if (configuration_user['GTK_NOTIFICATION'] and 
-                    get_override_status(configuration_system['NOTIFICATION_TIMEOUT'])):
-                txt = 'User cancelled loadshedding cmd "{}"'.format(configuration_user['CMD'])
-                log(txt)
-                print(txt)
-            else:
-                txt = 'Executing loadshedding cmd "{}"'.format(configuration_user['CMD'])
-                log(txt)
-                print(txt)
-
-                os.system(configuration_user['CMD'])
-            exit()
-        # We're not shedding now
     for _, row in sched.iterrows():
         if not row['stage'] <= curr_stage:
             continue
 
-        if row[day] == configuration_user['AREA']:
-            check_row(row, tomorrow=False)
+        if row[day] == configuration_user['AREA'] and check_row(row, date_now, False, configuration_system):
+            return True
 
-        if row[day_tomorrow] == configuration_user['AREA']:
-            check_row(row, tomorrow=True)
+        if row[day_tomorrow] == configuration_user['AREA'] and check_row(row, date_now, True, configuration_system):
+            return True
+
+        return False
 
 
 def try_get_stage(api_url: str, attempts=20):
@@ -82,6 +95,7 @@ def try_get_stage(api_url: str, attempts=20):
             print(str(e))
     print('Failure calling API, after {} attempts'.format(attempts))
     exit()
+
 
 def time_to_min(time: str):
     hour, minute = [int(x) for x in time.split(':')]
@@ -118,6 +132,7 @@ def get_override_status(timeout: int):
 
     Gtk.main()
     return override_shutdown
+
 
 if __name__ == "__main__":
     try:
