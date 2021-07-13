@@ -24,7 +24,7 @@ def main():
     date_now = datetime.now()
     sched = pd.read_csv(configuration_user['SCHEDULE_CSV'], sep=';')
 
-    shedding = check_shedding(curr_stage, sched, configuration_user, date_now)
+    shedding = check_shedding(curr_stage, sched, configuration_user, configuration_system, date_now)
 
     if not shedding:
         return False
@@ -61,7 +61,7 @@ def check_row(row, date_now, tomorrow, configuration_system):
     return False
 
 
-def check_shedding(curr_stage, sched, configuration_user, date_now):
+def check_shedding(curr_stage, sched, configuration_user, configuration_system, date_now):
     day = str(date_now.day)
     date_tomorrow = date_now + timedelta(days=1)
     day_tomorrow = str(date_tomorrow.day)
@@ -76,7 +76,7 @@ def check_shedding(curr_stage, sched, configuration_user, date_now):
         if row[day_tomorrow] == configuration_user['AREA'] and check_row(row, date_now, True, configuration_system):
             return True
 
-        return False
+    return False
 
 
 def try_get_stage(api_url: str, attempts=20):
