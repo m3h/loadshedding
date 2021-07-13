@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
-# TODO Can replace this with Python's built in logging
-def log(txt):
-    with open(LOG, 'a') as f:
-        f.write('\n')
-        f.write('{} {}'.format(datetime.now(), txt))
-        f.write(txt)
-
+import logging
 from datetime import datetime, timedelta
 import os
 import urllib.request
 import ssl
-import configuration
 
 import pandas as pd
+
+import configuration
 
 # Add support for old TLS
 ctx = ssl.create_default_context()
@@ -30,13 +25,11 @@ def main():
         return False
 
     if (configuration_user['GTK_NOTIFICATION'] and get_override_status(configuration_system['NOTIFICATION_TIMEOUT'])):
-        txt = 'User cancelled loadshedding cmd "{}"'.format(configuration_user['CMD'])
-        log(txt)
-        print(txt)
+        message = 'User cancelled loadshedding cmd "{}"'.format(configuration_user['CMD'])
+        logger.info(message)
     else:
-        txt = 'Executing loadshedding cmd "{}"'.format(configuration_user['CMD'])
-        log(txt)
-        print(txt)
+        message = 'Executing loadshedding cmd "{}"'.format(configuration_user['CMD'])
+        logger.info(message)
 
         os.system(configuration_user['CMD'])
     exit()
@@ -87,13 +80,12 @@ def try_get_stage(api_url: str, attempts=20):
             stage_str = req.read().decode()
             stage = int(stage_str) - 1 # The API has +1
 
-            with open(configuration_system['LOGSTAGE'], 'a') as f:
-                f.write('\n')
-                f.write("{};{}".format(datetime.now(), stage))
+            logger_stage.info(f'{stage}')
+
             return stage
         except Exception as e:
-            print(str(e))
-    print('Failure calling API, after {} attempts'.format(attempts))
+            logger.warning(str(e))
+    logger.error('Failure calling API, after {} attempts'.format(attempts))
     exit()
 
 
@@ -111,7 +103,7 @@ def get_override_status(timeout: int):
             n.close()
             n = notify2.Notification("Cancelling shutdown!")
             n.show()
-            print("Cancelling shutdown")
+            logging.info("Cancelling shutdown")
             override_shutdown = True
     def closed_cb(n):
         Gtk.main_quit()
@@ -135,33 +127,49 @@ def get_override_status(timeout: int):
 
 
 if __name__ == "__main__":
+    def get_logger(name, filename):
+        logger_crash = logging.getLogger(name)
+        logger_crash.setLevel(logging.DEBUG)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        logger_crash.addHandler(ch)
+        fh = logging.FileHandler(filename)
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        logger_crash.addHandler(fh)
+        return logger_crash
+
+    def get_crash_logger():
+        return get_logger('crash', 'crash.log')
+
+    logger_crash = get_crash_logger()
+
     try:
         configuration_system = configuration.read_configuration_system('configuration_system.yaml')
     except FileNotFoundError as e:
-        LOG = 'crash_log.log'
-        txt = f'Configuration file does not exist\n\t{str(e)}'
-        print(txt)
-        log(txt)
+        
+        message = f'Configuration file does not exist\n\t{str(e)}'
+        logger_crash.critical(message)
         exit()
     except configuration.MissingKeyError as e:
-        LOG = 'crash_log.log'
-        txt = str(e)
-        print(txt)
-        log(txt)
+        message = str(e)
+        logger_crash.critical(message)
         exit()
 
-    LOG = configuration_system['LOG']
+    logger = get_logger('general', configuration_system['LOG'])
+    logger_stage = get_logger('stage', configuration_system['LOGSTAGE'])
 
     try:
         configuration_user = configuration.read_configuration_user('configuration_user.yaml')
     except FileNotFoundError as e:
-        txt = f'Configuration file does not exist\n\t{str(e)}'
-        log(txt)
+        message = f'Configuration file does not exist\n\t{str(e)}'
+        logger.critical(message)
+        logger_crash.critical(message)
         exit()
     except configuration.MissingKeyError as e:
-        txt = str(e)
-        print(txt)
-        log(txt)
+        message = str(e)
+        logger.critical(message)
+        logger_crash.critical(message)
         exit()
 
     # Imports according to configuration files

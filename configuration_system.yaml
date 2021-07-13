@@ -1,7 +1,7 @@
 # API Address to get loadshedding stage
 API_URL: "http://loadshedding.eskom.co.za/LoadShedding/GetStatus"
 # Timestamped stage logfile
-LOGSTAGE: "stagelog.txt"
+LOGSTAGE: "stage.log"
 # Action and crash logfile
 LOG: "log.log"
 
