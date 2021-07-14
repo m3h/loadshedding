@@ -8,14 +8,16 @@ import pandas as pd
 
 from loadshedding import check_shedding
 
+
 class TestCheckShedding(unittest.TestCase):
     def setUp(self):
         configuration_system = {
-            'API_URL': 'http://loadshedding.eskom.co.za/LoadShedding/GetStatus', 
-            'LOGSTAGE': 'stagelog.txt', 
-            'LOG': 'log.log', 
-            'MIN_OFFSET': 4, 
-            'MAX_OFFSET': 17, 
+            'API_URL':
+                'http://loadshedding.eskom.co.za/LoadShedding/GetStatus',
+            'LOGSTAGE': 'stagelog.txt',
+            'LOG': 'log.log',
+            'MIN_OFFSET': 4,
+            'MAX_OFFSET': 17,
             'NOTIFICATION_TIMEOUT': 0
         }
         configuration_user = {
@@ -30,17 +32,22 @@ class TestCheckShedding(unittest.TestCase):
         self.configuration_user = configuration_user
         self.schedule = sched
 
-
     def check_case(self, test):
+        """Check a specific test case tuple for correctness
+
+        Args:
+            test (tuple): # Tuple of (AREA, TIMESTAMP (ISO FORMAT), STAGE,
+                EXPECTED LOADSHEDDING STATUS)
+        """
         self.configuration_user['AREA'] = test[0]
         datetime_test = datetime.datetime.fromisoformat(test[1])
         stage = test[2]
         expected_status = test[3]
 
-        status = check_shedding(stage, self.schedule, self.configuration_user, self.configuration_system, datetime_test)
+        status = check_shedding(stage, self.schedule, self.configuration_user,
+                                self.configuration_system, datetime_test)
 
         self.assertIs(status, expected_status, test)
-
 
     def test_stage_0_false(self):
         """Randomly test that stage 0 always returns false (not shedding)
@@ -50,7 +57,7 @@ class TestCheckShedding(unittest.TestCase):
         # Modified from https://stackoverflow.com/a/553448
         def random_date(start, end):
             """
-            This function will return a random datetime between two datetime 
+            This function will return a random datetime between two datetime
             objects.
             """
             delta = end - start
@@ -60,23 +67,26 @@ class TestCheckShedding(unittest.TestCase):
 
         n_tests = 1024
         date_start = datetime.datetime(2020, 1, 1, 0, 0, 0)
-        date_end = datetime.datetime(2050, 12, 31, 23, 59, 59)  # Maybe we are done by then
+        date_end = datetime.datetime(2050, 12, 31, 23, 59, 59)
 
         for i in range(n_tests):
             datetime_test = random_date(date_start, date_end)
 
             with self.subTest(i=i, date=str(datetime_test.date)):
-                shedding = check_shedding(0, self.schedule, self.configuration_user, self.configuration_system, datetime_test)
+                shedding = check_shedding(
+                    0, self.schedule, self.configuration_user,
+                    self.configuration_system, datetime_test)
                 self.assertFalse(shedding)
 
     def test_select(self):
         """Tests a few handcrafted test cases, nothing too difficult
         """
-        tests = (  # Tuple of (AREA, TIMESTAMP (ISO FORMAT), STAGE, EXPECTED LOADSHEDDING STATUS)
+        tests = (
             # On-Off at between stage 1 and 2
             ('8B', '2021-07-13 11:28:30', 1, False),
             ('8B', '2021-07-13 11:28:30', 2, True),
-            # On-Off Before loadshedding starts (shedding starts at 06:00, 2A does not appear earlier that day)
+            # On-Off Before loadshedding starts (shedding starts at 06:00,
+            # 2A does not appear earlier that day)
             ('2A', '2025-07-06 05:55:59', 1, False),
             ('2A', '2025-07-06 05:55:59', 4, False),
             ('2A', '2025-07-06 05:55:59', 5, True),
@@ -91,8 +101,8 @@ class TestCheckShedding(unittest.TestCase):
             ('6A', '2024-01-27 22:23:30', 7, True),
             ('6A', '2024-01-27 22:24:30', 7, True),
             ('6A', '2024-01-27 22:25:30', 7, True),
-            ('6A', '2024-01-27 22:26:30', 7, True),  # Might expect 'False' here, based on 4min window
-            ('6A', '2024-01-27 22:26:59', 7, True),  # Might expect 'False' here, based on 4min window
+            ('6A', '2024-01-27 22:26:30', 7, True),  # Might expect 'False'
+            ('6A', '2024-01-27 22:26:59', 7, True),  # based on 4min Window
             ('6A', '2024-01-27 22:27:00', 7, False),
             ('6A', '2024-01-27 22:27:01', 7, False),
             ('6A', '2024-01-27 22:27:30', 7, False),
@@ -116,12 +126,12 @@ class TestCheckShedding(unittest.TestCase):
         for test in tests:
             self.check_case(test)
 
-
     def test_midnight_tomorrow(self):
-        """Tests that shedding will be correctly inferred when loadshedding starts within a few minutes the next
+        """Tests that shedding will be correctly inferred when loadshedding
+        starts within a few minutes the next
         day
         """
-        tests = (  # Tuple of (AREA, TIMESTAMP (ISO FORMAT), STAGE, EXPECTED LOADSHEDDING STATUS)
+        tests = (
             ('7A', '2021-07-01 23:35:30', 1, False),
             ('7A', '2021-07-01 23:50:36', 1, True),
 
@@ -133,11 +143,11 @@ class TestCheckShedding(unittest.TestCase):
         for test in tests:
             self.check_case(test)
 
-
     def test_early_morning_yesterday(self):
-        """Tests that shedding will be inferred if the schedules from the previous day is still active
+        """Tests that shedding will be inferred if the schedules from the
+        previous day is still active
         """
-        tests = (  # Tuple of (AREA, TIMESTAMP (ISO FORMAT), STAGE, EXPECTED LOADSHEDDING STATUS)
+        tests = (
             ('6B', '2021-07-06 00:02:33', 1, True),
             ('6B', '2021-07-06 00:29:12', 1, False),
         )
@@ -148,7 +158,7 @@ class TestCheckShedding(unittest.TestCase):
     def test_midnight_month(self):
         """[summary]
         """
-        tests = (  # Tuple of (AREA, TIMESTAMP (ISO FORMAT), STAGE, EXPECTED LOADSHEDDING STATUS)
+        tests = (
             # 30 November for shedding on 01 December
             ('1A', '2021-11-30 23:35:30', 5, False),
             ('1A', '2021-11-30 23:50:36', 5, True),

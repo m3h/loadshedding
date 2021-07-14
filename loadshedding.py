@@ -19,16 +19,21 @@ def main():
     date_now = datetime.now()
     sched = pd.read_csv(configuration_user['SCHEDULE_CSV'], sep=';')
 
-    shedding = check_shedding(curr_stage, sched, configuration_user, configuration_system, date_now)
+    shedding = check_shedding(
+        curr_stage, sched, configuration_user, configuration_system, date_now
+        )
 
     if not shedding:
         return False
 
-    if (configuration_user['GTK_NOTIFICATION'] and get_override_status(configuration_system['NOTIFICATION_TIMEOUT'])):
-        message = 'User cancelled loadshedding cmd "{}"'.format(configuration_user['CMD'])
+    if (configuration_user['GTK_NOTIFICATION'] and
+            get_override_status(configuration_system['NOTIFICATION_TIMEOUT'])):
+        message = 'User cancelled loadshedding cmd "{}"'.format(
+            configuration_user['CMD'])
         logger.info(message)
     else:
-        message = 'Executing loadshedding cmd "{}"'.format(configuration_user['CMD'])
+        message = 'Executing loadshedding cmd "{}"'.format(
+            configuration_user['CMD'])
         logger.info(message)
 
         os.system(configuration_user['CMD'])
@@ -39,7 +44,8 @@ def check_row(row, date_now, tomorrow, configuration_system):
     start = time_to_min(row['start'])
     end = time_to_min(row['end'])
     now = time_to_min("{}:{}".format(date_now.hour, date_now.minute))
-    # The schedule, and therefore the csv, loops over to 00:30 for the next morning.
+    # The schedule, and therefore the csv,
+    # loops over to 00:30 for the next morning.
     # We wanna compare fairly
     if end < start:
         end += 24*60
@@ -47,14 +53,16 @@ def check_row(row, date_now, tomorrow, configuration_system):
     if tomorrow:
         start += 24*60
         end += 24*60
-    if start <= now + configuration_system['MIN_OFFSET'] <= end or start <= now + configuration_system['MAX_OFFSET'] <= end:
+    if (start <= now + configuration_system['MIN_OFFSET'] <= end or
+            start <= now + configuration_system['MAX_OFFSET'] <= end):
         # We're shedding now
         return True
 
     return False
 
 
-def check_shedding(curr_stage, sched, configuration_user, configuration_system, date_now):
+def check_shedding(
+        curr_stage, sched, configuration_user, configuration_system, date_now):
     day = str(date_now.day)
     date_tomorrow = date_now + timedelta(days=1)
     day_tomorrow = str(date_tomorrow.day)
@@ -63,10 +71,12 @@ def check_shedding(curr_stage, sched, configuration_user, configuration_system, 
         if not row['stage'] <= curr_stage:
             continue
 
-        if row[day] == configuration_user['AREA'] and check_row(row, date_now, False, configuration_system):
+        if (row[day] == configuration_user['AREA'] and
+                check_row(row, date_now, False, configuration_system)):
             return True
 
-        if row[day_tomorrow] == configuration_user['AREA'] and check_row(row, date_now, True, configuration_system):
+        if (row[day_tomorrow] == configuration_user['AREA']
+                and check_row(row, date_now, True, configuration_system)):
             return True
 
     return False
@@ -78,7 +88,7 @@ def try_get_stage(api_url: str, attempts=20):
         try:
             req = urllib.request.urlopen(api_url, timeout=10, context=ctx)
             stage_str = req.read().decode()
-            stage = int(stage_str) - 1 # The API has +1
+            stage = int(stage_str) - 1  # The API has +1
 
             logger_stage.info(f'{stage}')
 
@@ -97,6 +107,7 @@ def time_to_min(time: str):
 
 def get_override_status(timeout: int):
     override_shutdown = False
+
     def default_action_cb(n, action):
         nonlocal override_shutdown
         if action == 'default':
@@ -105,6 +116,7 @@ def get_override_status(timeout: int):
             n.show()
             logging.info("Cancelling shutdown")
             override_shutdown = True
+
     def closed_cb(n):
         Gtk.main_quit()
 
@@ -135,7 +147,8 @@ if __name__ == "__main__":
         logger_crash.addHandler(ch)
         fh = logging.FileHandler(filename)
         fh.setLevel(logging.DEBUG)
-        fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        fh.setFormatter(
+            logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
         logger_crash.addHandler(fh)
         return logger_crash
 
@@ -145,9 +158,10 @@ if __name__ == "__main__":
     logger_crash = get_crash_logger()
 
     try:
-        configuration_system = configuration.read_configuration_system('configuration_system.yaml')
+        configuration_system = configuration.read_configuration_system(
+            'configuration_system.yaml')
     except FileNotFoundError as e:
-        
+
         message = f'Configuration file does not exist\n\t{str(e)}'
         logger_crash.critical(message)
         exit()
@@ -160,7 +174,8 @@ if __name__ == "__main__":
     logger_stage = get_logger('stage', configuration_system['LOGSTAGE'])
 
     try:
-        configuration_user = configuration.read_configuration_user('configuration_user.yaml')
+        configuration_user = configuration.read_configuration_user(
+            'configuration_user.yaml')
     except FileNotFoundError as e:
         message = f'Configuration file does not exist\n\t{str(e)}'
         logger.critical(message)

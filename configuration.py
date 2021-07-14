@@ -3,10 +3,12 @@ Simply library to
     (i)     read YAML configuration files
     (ii)    check their validity
 """
-import os
 import yaml
 
-class MissingKeyError(LookupError): pass
+
+class MissingKeyError(LookupError):
+    pass
+
 
 def read_configuration(path: str):
     """Reads the YAML configuration file at path and converts all keys to uppercase
@@ -23,7 +25,9 @@ def read_configuration(path: str):
 
     return configuration
 
-def read_configuration_and_check(path: str, keys: list, configuration_file_type):
+
+def read_configuration_and_check(
+        path: str, keys: list, configuration_file_type):
     """Reads the YAML configuration file at path and
     check that all all keys are present in the configuration file
 
@@ -34,7 +38,8 @@ def read_configuration_and_check(path: str, keys: list, configuration_file_type)
 
     Raises:
         FileNotFoundError: Raised when the file at path does not exist
-        MissingKeyError: Raised when one or more keys are not present in the configuration file
+        MissingKeyError: Raised when one or more keys are not present in the
+            configuration file
 
     Returns:
         [dict]: Configuration dictionary
@@ -44,8 +49,10 @@ def read_configuration_and_check(path: str, keys: list, configuration_file_type)
 
     for key in keys:
         if key not in configuration:
-            raise MissingKeyError(f'{key} not in {configuration_file_type} configuration file "{path}"')
-    
+            raise MissingKeyError(
+                f'{key} not in {configuration_file_type} '
+                'configuration file "{path}"')
+
     return configuration
 
 
@@ -57,12 +64,14 @@ def read_configuration_system(path):
 
     Raises:
         FileNotFoundError: Raised when the file at path does not exist
-        MissingKeyError: Raised when one or more keys are not present in the configuration file
+        MissingKeyError: Raised when one or more keys are not present in the
+            configuration file
 
     Returns:
         [dict]: System configuration dictionary
     """
-    keys = ['API_URL', 'LOGSTAGE', 'LOG', 'NOTIFICATION_TIMEOUT', 'MIN_OFFSET', 'MAX_OFFSET']
+    keys = ['API_URL', 'LOGSTAGE', 'LOG', 'NOTIFICATION_TIMEOUT', 'MIN_OFFSET',
+            'MAX_OFFSET']
     return read_configuration_and_check(path, keys, 'system')
 
 
@@ -74,7 +83,8 @@ def read_configuration_user(path):
 
     Raises:
         FileNotFoundError: Raised when the file at path does not exist
-        MissingKeyError: Raised when one or more keys are not present in the configuration file
+        MissingKeyError: Raised when one or more keys are not present in the
+            configuration file
 
     Returns:
         [dict]: System configuration dictionary
