@@ -70,8 +70,7 @@ def read_configuration_system(path):
     Returns:
         [dict]: System configuration dictionary
     """
-    keys = ['API_URL', 'LOGSTAGE', 'LOG', 'NOTIFICATION_TIMEOUT', 'MIN_OFFSET',
-            'MAX_OFFSET']
+    keys = ['API_URL', 'LOGSTAGE', 'LOG', 'NOTIFICATION_TIMEOUT']
     return read_configuration_and_check(path, keys, 'system')
 
 
@@ -89,5 +88,5 @@ def read_configuration_user(path):
     Returns:
         [dict]: System configuration dictionary
     """
-    keys = ['AREA', 'CMD', 'SCHEDULE_CSV']
+    keys = ['AREA', 'CMD', 'SCHEDULE_CSV', 'PAD_START', 'IGNORE_END']
     return read_configuration_and_check(path, keys, 'user')

@@ -15,15 +15,15 @@ test_areas = {
                 'http://loadshedding.eskom.co.za/LoadShedding/GetStatus',
             'LOGSTAGE': 'stagelog.txt',
             'LOG': 'log.log',
-            'MIN_OFFSET': 4,
-            'MAX_OFFSET': 17,
-            'NOTIFICATION_TIMEOUT': 0
+            'NOTIFICATION_TIMEOUT': 0,
         },
         'configuration_user': {
             'AREA': '8B',
             'SCHEDULE_CSV': 'schedules/load_shedding_city_power.csv',
             'CMD': 'sudo /usr/sbin/s2disk',
-            'GTK_NOTIFICATION': False
+            'GTK_NOTIFICATION': False,
+            'PAD_START': 17,
+            'IGNORE_END': 4,
         },
         'test_select': (
             # On-Off at between stage 1 and 2
@@ -94,15 +94,15 @@ test_areas = {
                 'http://loadshedding.eskom.co.za/LoadShedding/GetStatus',
             'LOGSTAGE': 'stagelog.txt',
             'LOG': 'log.log',
-            'MIN_OFFSET': 4,
-            'MAX_OFFSET': 17,
-            'NOTIFICATION_TIMEOUT': 0
+            'NOTIFICATION_TIMEOUT': 0,
         },
         'configuration_user': {
             'AREA': 3,
             'SCHEDULE_CSV': 'schedules/load_shedding_city_of_cape_town.csv',
             'CMD': 'sudo /usr/sbin/s2disk',
-            'GTK_NOTIFICATION': False
+            'GTK_NOTIFICATION': False,
+            'PAD_START': 17,
+            'IGNORE_END': 4,
         },
         'test_select': (
             # On-Off at between stage 1 and 2
