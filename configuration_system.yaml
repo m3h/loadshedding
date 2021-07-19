@@ -5,6 +5,16 @@ LOGSTAGE: "stage.log"
 # Action and crash logfile
 LOG: "log.log"
 
+# Given 'n' is now, 's' is the start time and 'e' is the end time according
+# to the schedule,
+# loadshedding is checked as
+# s - MIN_OFFSET <= n <= e - MIN_OFFSET or
+# s - MAX_OFFSET <= n <= e - MAX_OFFSET
+# Given MIN_OFFSET < MAX_OFFSET
+# MIN_OFFSET: Used to cancel loadshedding early - Ignore loadshedding before
+#   it ends according to the schedule
+# MAX_OFFSET: Used to start loadshedding early - Run CMD before loadshedding
+#   starts
 MIN_OFFSET: 4 # minutes
 MAX_OFFSET: 17 # minutes
 
