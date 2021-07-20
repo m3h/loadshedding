@@ -100,7 +100,7 @@ def try_get_stage(api_url: str, attempts=20):
 
 
 def time_to_min(time: str):
-    hour, minute = [int(x) for x in time.split(':')]
+    hour, minute = [int(x) for x in time.split(':')][:2]
 
     return hour*60 + minute
 
