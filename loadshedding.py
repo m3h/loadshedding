@@ -187,6 +187,11 @@ if __name__ == "__main__":
         logger.critical(message)
         logger_crash.critical(message)
         exit()
+    except configuration.VersionError as e:
+        message = str(e)
+        logger.critical(message)
+        logger_crash.critical(message)
+        exit()
 
     # Imports according to configuration files
     if configuration_user['GTK_NOTIFICATION']:

@@ -1,3 +1,6 @@
+# Configuration file version
+VERSION: '0.1.0'
+
 # Loadshedding area
 # Should correspond to the areas beneath the stages in the SCHEDULE_CSV file
 # Area names are those of the original source documentation

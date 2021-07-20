@@ -9,6 +9,9 @@ import yaml
 class MissingKeyError(LookupError):
     pass
 
+class VersionError(RuntimeError):
+    pass
+
 
 def read_configuration(path: str):
     """Reads the YAML configuration file at path and converts all keys to uppercase
@@ -27,7 +30,7 @@ def read_configuration(path: str):
 
 
 def read_configuration_and_check(
-        path: str, keys: list, configuration_file_type):
+        path: str, keys: list, configuration_file_type, version: str):
     """Reads the YAML configuration file at path and
     check that all all keys are present in the configuration file
 
@@ -35,6 +38,7 @@ def read_configuration_and_check(
         path (str): Path to YAML configuration file
         keys (list): List of keys that must be present
         configuration_file_type (str): Type of configuration file read
+        version (str): Expected version
 
     Raises:
         FileNotFoundError: Raised when the file at path does not exist
@@ -48,6 +52,13 @@ def read_configuration_and_check(
     configuration = read_configuration(path)
 
     for key in keys:
+        if 'VERSION' not in configuration:
+            raise VersionError('VERSION not specified in configuration file')
+        if configuration['VERSION'] != version:
+            raise VersionError(
+                'VERSION mismatch. '
+                f'Expected: {version} - Specified: {configuration["VERSION"]}'
+                )
         if key not in configuration:
             raise MissingKeyError(
                 f'{key} not in {configuration_file_type} '
@@ -71,7 +82,8 @@ def read_configuration_system(path):
         [dict]: System configuration dictionary
     """
     keys = ['API_URL', 'LOGSTAGE', 'LOG', 'NOTIFICATION_TIMEOUT']
-    return read_configuration_and_check(path, keys, 'system')
+    version = '0.1.0'
+    return read_configuration_and_check(path, keys, 'system', version)
 
 
 def read_configuration_user(path):
@@ -89,4 +101,5 @@ def read_configuration_user(path):
         [dict]: System configuration dictionary
     """
     keys = ['AREA', 'CMD', 'SCHEDULE_CSV', 'PAD_START', 'IGNORE_END']
-    return read_configuration_and_check(path, keys, 'user')
+    version = '0.1.0'
+    return read_configuration_and_check(path, keys, 'user', version)

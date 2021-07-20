@@ -11,6 +11,7 @@ from loadshedding import check_shedding
 test_areas = {
     "city_power": {
         'configuration_system': {
+            'VERSION': '0.1.0',
             'API_URL':
                 'http://loadshedding.eskom.co.za/LoadShedding/GetStatus',
             'LOGSTAGE': 'stagelog.txt',
@@ -18,6 +19,7 @@ test_areas = {
             'NOTIFICATION_TIMEOUT': 0,
         },
         'configuration_user': {
+            'VERSION': '0.1.0',
             'AREA': '8B',
             'SCHEDULE_CSV': 'schedules/load_shedding_city_power.csv',
             'CMD': 'sudo /usr/sbin/s2disk',
