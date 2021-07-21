@@ -42,7 +42,7 @@ class TkTimeoutDialog():
             gets input.
     """
     def __init__(self):
-        self.affirmative = True
+        self.affirmative = False
         self.reason = "__init__"
 
     def show_notification(self, dialog_msg: str, timeout: float = 120,
@@ -74,7 +74,7 @@ class TkTimeoutDialog():
                 reason for the bool.
         """
 
-        self.affirmative = True
+        self.affirmative = False
         self.reason = "Dialog Termination"
 
         self.dialog_msg = dialog_msg
@@ -83,6 +83,7 @@ class TkTimeoutDialog():
         self.timeout_update_interval = timeout_update_interval
 
         if timeout <= 0.0:
+            self.affirmative = True
             self.reason = "zero-valued timeout"
             return self.get_affirmative()
 
