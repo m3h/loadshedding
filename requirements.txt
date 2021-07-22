@@ -1,6 +1,2 @@
-pycairo
-PyGObject
-notify2
-dbus-python
 pandas
 pyyaml
