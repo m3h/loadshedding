@@ -27,7 +27,7 @@ def main():
     if not shedding:
         return False
 
-    if configuration_user['GTK_NOTIFICATION']:
+    if configuration_user['GUI_NOTIFICATION']:
         override, reason = get_override_status(
             configuration_system['NOTIFICATION_TIMEOUT'],
             "Loadshedding imminent!")
@@ -48,7 +48,7 @@ def main():
     exit()
 
 
-def check_row(row, date_now, tomorrow, configuration_system):
+def check_row(row, date_now, tomorrow, configuration_user):
     start = time_to_min(row['start'])
     end = time_to_min(row['end'])
     now = time_to_min("{}:{}".format(date_now.hour, date_now.minute))
@@ -61,8 +61,9 @@ def check_row(row, date_now, tomorrow, configuration_system):
     if tomorrow:
         start += 24*60
         end += 24*60
-    if (start <= now + configuration_system['MIN_OFFSET'] <= end or
-            start <= now + configuration_system['MAX_OFFSET'] <= end):
+    if (start - configuration_user['PAD_START']
+            <= now <=
+            end - configuration_user['IGNORE_END']):
         # We're shedding now
         return True
 
@@ -80,11 +81,11 @@ def check_shedding(
             continue
 
         if (row[day] == configuration_user['AREA'] and
-                check_row(row, date_now, False, configuration_system)):
+                check_row(row, date_now, False, configuration_user)):
             return True
 
         if (row[day_tomorrow] == configuration_user['AREA']
-                and check_row(row, date_now, True, configuration_system)):
+                and check_row(row, date_now, True, configuration_user)):
             return True
 
     return False
@@ -170,6 +171,11 @@ if __name__ == "__main__":
         logger_crash.critical(message)
         exit()
     except configuration.MissingKeyError as e:
+        message = str(e)
+        logger.critical(message)
+        logger_crash.critical(message)
+        exit()
+    except configuration.VersionError as e:
         message = str(e)
         logger.critical(message)
         logger_crash.critical(message)

@@ -1,3 +1,6 @@
+# Configuration file version
+VERSION: '0.1.0'
+
 # API Address to get loadshedding stage
 API_URL: "http://loadshedding.eskom.co.za/LoadShedding/GetStatus"
 # Timestamped stage logfile
@@ -5,8 +8,5 @@ LOGSTAGE: "stage.log"
 # Action and crash logfile
 LOG: "log.log"
 
-MIN_OFFSET: 4 # minutes
-MAX_OFFSET: 17 # minutes
-
-# GTK Notication timeout
+# GUI Notication timeout
 NOTIFICATION_TIMEOUT: 120

@@ -1,3 +1,6 @@
+# Configuration file version
+VERSION: '0.1.0'
+
 # Loadshedding area
 # Should correspond to the areas beneath the stages in the SCHEDULE_CSV file
 # Area names are those of the original source documentation
@@ -11,6 +14,15 @@ SCHEDULE_CSV: 'schedules/load_shedding_city_power.csv'
 #   "sudo poweroff" - Shutdown
 CMD: "sudo /usr/sbin/s2disk"
 
-# Show GTK Notification with timeout before running action specified by CMD
+# Show GUI Notification with timeout before running action specified by CMD
 #   Allows the user to cancel the action
-GTK_NOTIFICATION: True
+GUI_NOTIFICATION: True
+
+# Pad the start time with PAD_START minutes before the time indicated on the
+# schedule
+# Used to run the command before loadshedding actually starts
+PAD_START: 17 # minutes
+# Ignore the last IGNORE_END minutes of each interval on the schedule
+# Used to create a deadzone in case the power is restored earlier than the
+# schedule indicates
+IGNORE_END: 30 # minutes
