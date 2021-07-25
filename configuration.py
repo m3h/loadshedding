@@ -9,6 +9,7 @@ import yaml
 class MissingKeyError(LookupError):
     pass
 
+
 class VersionError(RuntimeError):
     pass
 

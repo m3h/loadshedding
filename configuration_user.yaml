@@ -14,9 +14,9 @@ SCHEDULE_CSV: 'schedules/load_shedding_city_power.csv'
 #   "sudo poweroff" - Shutdown
 CMD: "sudo /usr/sbin/s2disk"
 
-# Show GTK Notification with timeout before running action specified by CMD
+# Show GUI Notification with timeout before running action specified by CMD
 #   Allows the user to cancel the action
-GTK_NOTIFICATION: True
+GUI_NOTIFICATION: True
 
 # Pad the start time with PAD_START minutes before the time indicated on the
 # schedule

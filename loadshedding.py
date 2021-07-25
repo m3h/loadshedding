@@ -27,7 +27,7 @@ def main():
     if not shedding:
         return False
 
-    if configuration_user['GTK_NOTIFICATION']:
+    if configuration_user['GUI_NOTIFICATION']:
         override, reason = get_override_status(
             configuration_system['NOTIFICATION_TIMEOUT'],
             "Loadshedding imminent!")

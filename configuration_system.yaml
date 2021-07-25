@@ -8,5 +8,5 @@ LOGSTAGE: "stage.log"
 # Action and crash logfile
 LOG: "log.log"
 
-# GTK Notication timeout
+# GUI Notication timeout
 NOTIFICATION_TIMEOUT: 120
