@@ -9,6 +9,7 @@ import pandas as pd
 
 import configuration
 
+import lutils.tktimeoutdialog
 # Add support for old TLS
 ctx = ssl.create_default_context()
 ctx.set_ciphers('DEFAULT@SECLEVEL=1')
@@ -26,9 +27,16 @@ def main():
     if not shedding:
         return False
 
-    if (configuration_user['GTK_NOTIFICATION'] and
-            get_override_status(configuration_system['NOTIFICATION_TIMEOUT'])):
-        message = 'User cancelled loadshedding cmd "{}"'.format(
+    if configuration_user['GTK_NOTIFICATION']:
+        override, reason = get_override_status(
+            configuration_system['NOTIFICATION_TIMEOUT'],
+            "Loadshedding imminent!")
+    else:
+        override, reason = False, None
+
+    if override:
+        message = 'User cancelled loadshedding ({}) cmd "{}"'.format(
+            reason,
             configuration_user['CMD'])
         logger.info(message)
     else:
@@ -106,37 +114,17 @@ def time_to_min(time: str):
     return hour*60 + minute
 
 
-def get_override_status(timeout: int):
-    override_shutdown = False
+def get_override_status(timeout: int, dialog_msg: str):
 
-    def default_action_cb(n, action):
-        nonlocal override_shutdown
-        if action == 'default':
-            n.close()
-            n = notify2.Notification("Cancelling shutdown!")
-            n.show()
-            logging.info("Cancelling shutdown")
-            override_shutdown = True
+    dialog_notification = lutils.tktimeoutdialog.TkTimeoutDialog()
 
-    def closed_cb(n):
-        Gtk.main_quit()
+    shutdown, reason = dialog_notification.show_notification(
+        dialog_msg=dialog_msg,
+        timeout=timeout,
+        affirmative_txt='Shutdown')
 
-    if not notify2.init("loadshedding.py", mainloop='glib'):
-        return True
-    n = notify2.Notification("Cancel loadshedding shutdown?")
-
-    server_capabilities = notify2.get_server_caps()
-    if 'actions' in server_capabilities:
-        n.add_action('default', "Cancel shutdown", default_action_cb)
-    n.connect('closed', closed_cb)
-
-    n.timeout = timeout*1000
-    n.set_urgency(notify2.URGENCY_CRITICAL)
-    if not n.show():
-        return True
-
-    Gtk.main()
-    return override_shutdown
+    override_shutdown = not shutdown
+    return override_shutdown, reason
 
 
 if __name__ == "__main__":
@@ -192,10 +180,5 @@ if __name__ == "__main__":
         logger.critical(message)
         logger_crash.critical(message)
         exit()
-
-    # Imports according to configuration files
-    if configuration_user['GTK_NOTIFICATION']:
-        from gi.repository import Gtk
-        import notify2
 
     main()
