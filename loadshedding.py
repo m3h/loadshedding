@@ -5,10 +5,9 @@ import os
 import urllib.request
 import ssl
 
-import pandas as pd
-
 import configuration
 
+import lutils.lcsv
 import lutils.tktimeoutdialog
 # Add support for old TLS
 ctx = ssl.create_default_context()
@@ -18,7 +17,13 @@ ctx.set_ciphers('DEFAULT@SECLEVEL=1')
 def main():
     curr_stage = try_get_stage(configuration_system['API_URL'])
     date_now = datetime.now()
-    sched = pd.read_csv(configuration_user['SCHEDULE_CSV'], sep=';')
+
+    transforms = {
+        'stage': lambda x: int(x)
+    }
+    sched = lutils.lcsv.read_csv(configuration_user['SCHEDULE_CSV'],
+                                 transforms=transforms,
+                                 delimiter=';')
 
     shedding = check_shedding(
         curr_stage, sched, configuration_user, configuration_system, date_now
@@ -76,15 +81,15 @@ def check_shedding(
     date_tomorrow = date_now + timedelta(days=1)
     day_tomorrow = str(date_tomorrow.day)
 
-    for _, row in sched.iterrows():
+    for row in sched:
         if not row['stage'] <= curr_stage:
             continue
 
-        if (row[day] == configuration_user['AREA'] and
+        if (row[day] == str(configuration_user['AREA']) and
                 check_row(row, date_now, False, configuration_user)):
             return True
 
-        if (row[day_tomorrow] == configuration_user['AREA']
+        if (row[day_tomorrow] == str(configuration_user['AREA'])
                 and check_row(row, date_now, True, configuration_user)):
             return True
 

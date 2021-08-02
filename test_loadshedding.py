@@ -4,7 +4,7 @@
 import unittest
 import datetime
 
-import pandas as pd
+import lutils.lcsv
 
 from loadshedding import check_shedding
 
@@ -163,7 +163,12 @@ class TestCheckShedding(unittest.TestCase):
         configuration_system = test_areas[area]['configuration_system']
         configuration_user = test_areas[area]['configuration_user']
 
-        sched = pd.read_csv(configuration_user['SCHEDULE_CSV'], sep=';')
+        transforms = {
+            'stage': lambda x: int(x)
+        }
+        sched = lutils.lcsv.read_csv(configuration_user['SCHEDULE_CSV'],
+                                     transforms=transforms,
+                                     delimiter=';')
 
         self.configuration_system = configuration_system
         self.configuration_user = configuration_user
