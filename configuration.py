@@ -101,6 +101,7 @@ def read_configuration_user(path):
     Returns:
         [dict]: System configuration dictionary
     """
-    keys = ['AREA', 'CMD', 'SCHEDULE_CSV', 'PAD_START', 'IGNORE_END']
-    version = '0.1.0'
+    keys = ['AREA', 'CMD', 'SCHEDULE_CSV', 'PAD_START', 'IGNORE_END',
+            'RAN_CHECK']
+    version = '0.1.1'
     return read_configuration_and_check(path, keys, 'user', version)

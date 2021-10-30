@@ -30,26 +30,60 @@ def main():
         )
 
     if not shedding:
+        try:
+            if (configuration_user['RAN_CHECK']):
+                if os.path.exists('ran.log'):
+                    os.remove('ran.log')
+        except Exception as e:
+            logger.exception(e)
         return False
 
+    # Override GUI Check
     if configuration_user['GUI_NOTIFICATION']:
-        override, reason = get_override_status(
+        override_gui, reason = get_override_status(
             configuration_system['NOTIFICATION_TIMEOUT'],
             "Loadshedding imminent!")
     else:
-        override, reason = False, None
+        override_gui, reason = False, None
 
-    if override:
+    if override_gui:
         message = 'User cancelled loadshedding ({}) cmd "{}"'.format(
             reason,
             configuration_user['CMD'])
         logger.info(message)
-    else:
-        message = 'Executing loadshedding cmd "{}"'.format(
-            configuration_user['CMD'])
-        logger.info(message)
+        return
 
-        os.system(configuration_user['CMD'])
+    # Override RAN Check
+    # In a very lenient try-except block, if fails it shouldn't block the
+    #   expected behaviour (e.g. running the command)
+    override_ran = False
+    try:
+        if (configuration_user['RAN_CHECK']):
+            if os.path.exists('ran.log'):
+                with open('ran.log', 'r') as f:
+                    area, datetime_ran = f.read().strip().split(';')
+                area = str(area)
+                datetime_ran = datetime.fromisoformat(datetime_ran)
+
+                if area == str(configuration_user['AREA']):
+                    override_ran = True
+
+            with open('ran.log', 'w') as f:
+                f.write(f'{configuration_user["AREA"]};{date_now.isoformat()}')
+    except Exception as e:
+        logger.exception(e)
+
+    if override_ran:
+        message = f'Cancelled by override ran check ({datetime_ran})'
+        logger.info(message)
+        return
+
+    # No overrides, just run the command
+    message = 'Executing loadshedding cmd "{}"'.format(
+        configuration_user['CMD'])
+    logger.info(message)
+
+    os.system(configuration_user['CMD'])
     exit()
 
 
