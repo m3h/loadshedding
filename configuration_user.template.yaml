@@ -1,18 +1,20 @@
 # Configuration file version
-VERSION: '0.1.0'
+VERSION: '0.2.0'
 
 # Loadshedding area
 # Should correspond to the areas beneath the stages in the SCHEDULE_CSV file
 # Area names are those of the original source documentation
-AREA: '8B'
+AREA: '<AREA>'
 # Loadshedding schedule
-SCHEDULE_CSV: 'schedules/load_shedding_city_power.csv'
+SCHEDULE_CSV: '<PATH_TO_SCHEDULE.CSV>'
+# API Address to get loadshedding stage
+API_URL: "<PATH_TO_CURRENT_STAGE_SCHEDULE_QUERY_API>"
 
 # Command to run just before or during loadshedding
 # Examples:
 #   "sudo /usr/sbin/s2disk" - Hibernate
 #   "sudo poweroff" - Shutdown
-CMD: "sudo /usr/sbin/s2disk"
+CMD: "<COMMAND>"
 
 # Show GUI Notification with timeout before running action specified by CMD
 #   Allows the user to cancel the action

@@ -1,8 +1,6 @@
 # Configuration file version
-VERSION: '0.1.0'
+VERSION: '0.2.0'
 
-# API Address to get loadshedding stage
-API_URL: "http://loadshedding.eskom.co.za/LoadShedding/GetStatus"
 # Timestamped stage logfile
 LOGSTAGE: "stage.log"
 # Action and crash logfile
