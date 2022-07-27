@@ -131,3 +131,7 @@ dmypy.json
 #IDE metadata
 .idea/
 .vscode/
+
+# User-specification configuration
+configuration_system.yaml
+configuration_user.yaml
