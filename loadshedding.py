@@ -3,20 +3,29 @@ import logging
 from datetime import datetime, timedelta
 import os
 import urllib.request
-import ssl
+import json
+
+import loadshedding_thingamabob.schedule
 
 import configuration
-
 import lutils.lcsv
 import lutils.tktimeoutdialog
-# Add support for old TLS
-ctx = ssl.create_default_context()
-ctx.set_ciphers('DEFAULT@SECLEVEL=1')
 
 
 def main():
-    curr_stage = try_get_stage(configuration_system['API_URL'])
+    response = get_stage_schedule(configuration_user['API_URL'])
+
+    # Build schedule
+    stage_schedule_csv = json.loads(response)['schedule_csv']
+    stage_schedule = loadshedding_thingamabob.schedule.Schedule.from_string(
+        stage_schedule_csv)
+
+    # Get current stage
     date_now = datetime.now()
+    date_soon = date_now + timedelta(minutes=configuration_user['PAD_START'])
+    stage_current = stage_schedule.stage(date_soon.timestamp())
+    # stage_current = stage_schedule
+
 
     transforms = {
         'stage': lambda x: int(x)
@@ -26,7 +35,7 @@ def main():
                                  delimiter=';')
 
     shedding = check_shedding(
-        curr_stage, sched, configuration_user, configuration_system, date_now
+        stage_current, sched, configuration_user, configuration_system, date_now
         )
 
     if not shedding:
@@ -96,17 +105,16 @@ def check_shedding(
     return False
 
 
-def try_get_stage(api_url: str, attempts=20):
+def get_stage_schedule(api_url: str, attempts=20):
     # We'll try x times
     for x in range(attempts):
         try:
-            req = urllib.request.urlopen(api_url, timeout=10, context=ctx)
-            stage_str = req.read().decode()
-            stage = int(stage_str) - 1  # The API has +1
+            response = urllib.request.urlopen(api_url, timeout=10)
+            response = response.read().decode()
 
-            logger_stage.info(f'{stage}')
+            logger_stage.info(f'{response}')
 
-            return stage
+            return response
         except Exception as e:
             logger.warning(str(e))
     logger.error('Failure calling API, after {} attempts'.format(attempts))
