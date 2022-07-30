@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import logging
+import logging.handlers
 from datetime import datetime, timedelta
 import os
 import urllib.request
 import json
+import pathlib
 
 import loadshedding_thingamabob.schedule
 
@@ -12,20 +14,31 @@ import lutils.lcsv
 import lutils.tktimeoutdialog
 
 
-def main():
+def main(
+        configuration_system: dict, configuration_user: dict,
+        logger: logging.Logger, logger_stage: logging.Logger
+        ):
+    logger.info(
+        'Running loadshedding script: '
+        f'configuration_system={configuration_system} '
+        f'configuration_user={configuration_user} '
+        )
+
     response = get_stage_schedule(configuration_user['API_URL'])
+    logger_stage.info(f'{response}')
 
     # Build schedule
     stage_schedule_csv = json.loads(response)['schedule_csv']
     stage_schedule = loadshedding_thingamabob.schedule.Schedule.from_string(
         stage_schedule_csv)
+    logger.info(f'stage_schedule: {stage_schedule}')
 
     # Get current stage
     date_now = datetime.now()
     date_soon = date_now + timedelta(minutes=configuration_user['PAD_START'])
     stage_current = stage_schedule.stage(date_soon.timestamp())
+    logger.info(f'stage_current: {stage_current}')
     # stage_current = stage_schedule
-
 
     transforms = {
         'stage': lambda x: int(x)
@@ -35,10 +48,13 @@ def main():
                                  delimiter=';')
 
     shedding = check_shedding(
-        stage_current, sched, configuration_user, configuration_system, date_now
+        stage_current, sched,
+        configuration_user, configuration_system,
+        date_now
         )
 
     if not shedding:
+        logger.info('status: not shedding any loads')
         return False
 
     if configuration_user['GUI_NOTIFICATION']:
@@ -112,8 +128,6 @@ def get_stage_schedule(api_url: str, attempts=20):
             response = urllib.request.urlopen(api_url, timeout=10)
             response = response.read().decode()
 
-            logger_stage.info(f'{response}')
-
             return response
         except Exception as e:
             logger.warning(str(e))
@@ -141,13 +155,44 @@ def get_override_status(timeout: int, dialog_msg: str):
 
 
 if __name__ == "__main__":
+    def switch_last_two_suffixes(base_filename: str):
+        """Switch the last two suffixes of the filename
+        Used in TimedRotatingFileHandler as .namer
+            to switch fix the filename upon rotating, e.g.
+            filename = module.log
+            on rotate: base_filename = module.log.datetime
+
+        Output of this function will then be:
+            switch_last_two_suffixes("module.log.datetime") -> module.datetime.log
+
+        Args:
+            base_filename (str): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        base_filename = pathlib.PurePath(base_filename)
+        parent = base_filename.parent
+        name = base_filename.name.split('.')
+        assert len(name) >= 2
+
+        name = '.'.join(name[:-2] + [name[-1], name[-2]])
+
+        return str(parent / name)
+
     def get_logger(name, filename):
+        filename = pathlib.Path(filename)
+        if not filename.suffix:
+            filename = filename.with_suffix('.log')
+
         logger_crash = logging.getLogger(name)
         logger_crash.setLevel(logging.DEBUG)
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
         logger_crash.addHandler(ch)
-        fh = logging.FileHandler(filename)
+        fh = logging.handlers.TimedRotatingFileHandler(
+            filename, when="midnight"
+            )
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(
             logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -194,4 +239,4 @@ if __name__ == "__main__":
         logger_crash.critical(message)
         exit()
 
-    main()
+    main(configuration_system, configuration_user, logger, logger_stage)
