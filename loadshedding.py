@@ -16,12 +16,12 @@ import lutils.tktimeoutdialog
 def main(
         configuration_system: dict, configuration_user: dict,
         logger: logging.Logger, logger_stage: logging.Logger
-        ):
+):
     logger.info(
         'Running loadshedding script: '
         f'configuration_system={configuration_system} '
         f'configuration_user={configuration_user} '
-        )
+    )
 
     date_now = datetime.now()
 
@@ -38,7 +38,7 @@ def main(
         stage_schedule = \
             loadshedding_thingamabob.schedule.Schedule.from_string(
                 stage_schedule_csv
-                )
+            )
         logger.info(f'stage_schedule: {stage_schedule}')
 
         # Get current stage
@@ -58,7 +58,7 @@ def main(
         stage_current, sched,
         configuration_user, configuration_system,
         date_now
-        )
+    )
 
     if not shedding:
         logger.info('status: not shedding any loads')
@@ -217,7 +217,7 @@ if __name__ == "__main__":
         logger_crash.addHandler(ch)
         fh = logging.handlers.TimedRotatingFileHandler(
             filename, when="midnight"
-            )
+        )
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(
             logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -234,17 +234,17 @@ if __name__ == "__main__":
 
         parser = argparse.ArgumentParser(
             description='Automatic hibernate during loadshedding'
-            )
+        )
         parser.add_argument(
             '--configuration_system', type=str,
             default='configuration_system.yaml',
             help='Path to the system configuration file.'
-            )
+        )
         parser.add_argument(
             '--configuration_user', type=str,
             default='configuration_user.yaml',
             help='Path to the user configuration file.'
-            )
+        )
         args = parser.parse_args()
     except Exception as e:
         logger_crash.exception(e)

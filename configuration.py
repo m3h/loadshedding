@@ -59,7 +59,7 @@ def read_configuration_and_check(
             raise VersionError(
                 'VERSION mismatch. '
                 f'Expected: {version} - Specified: {configuration["VERSION"]}'
-                )
+            )
         if key not in configuration:
             raise MissingKeyError(
                 f'{key} not in {configuration_file_type} '
@@ -104,6 +104,6 @@ def read_configuration_user(path):
     keys = [
         'API_URL', 'AREA', 'QUERY_MODE', 'CMD',
         'SCHEDULE_CSV', 'PAD_START', 'IGNORE_END',
-        ]
+    ]
     version = '0.2.1'
     return read_configuration_and_check(path, keys, 'user', version)
