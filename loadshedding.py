@@ -7,7 +7,6 @@ import urllib.request
 import json
 import pathlib
 
-import loadshedding_thingamabob.schedule
 
 import configuration
 import lutils.lcsv
@@ -24,21 +23,29 @@ def main(
         f'configuration_user={configuration_user} '
         )
 
-    response = get_stage_schedule(configuration_user['API_URL'])
-    logger_stage.info(f'{response}')
-
-    # Build schedule
-    stage_schedule_csv = json.loads(response)['schedule_csv']
-    stage_schedule = loadshedding_thingamabob.schedule.Schedule.from_string(
-        stage_schedule_csv)
-    logger.info(f'stage_schedule: {stage_schedule}')
-
-    # Get current stage
     date_now = datetime.now()
-    date_soon = date_now + timedelta(minutes=configuration_user['PAD_START'])
-    stage_current = stage_schedule.stage(date_soon.timestamp())
+
+    if configuration_user['QUERY_MODE'].lower() == 'direct':
+        stage_current = get_stage_direct(configuration_system['API_URL'])
+    elif configuration_user['QUERY_MODE'].lower() == \
+            'loadshedding_thingamabob':
+        response = get_stage_schedule(configuration_user['API_URL'])
+        logger_stage.info(f'{response}')
+
+        # Build schedule
+        import loadshedding_thingamabob.schedule
+        stage_schedule_csv = json.loads(response)['schedule_csv']
+        stage_schedule = \
+            loadshedding_thingamabob.schedule.Schedule.from_string(
+                stage_schedule_csv
+                )
+        logger.info(f'stage_schedule: {stage_schedule}')
+
+        # Get current stage
+        date_soon = \
+            date_now + timedelta(minutes=configuration_user['PAD_START'])
+        stage_current = stage_schedule.stage(date_soon.timestamp())
     logger.info(f'stage_current: {stage_current}')
-    # stage_current = stage_schedule
 
     transforms = {
         'stage': lambda x: int(x)
@@ -121,6 +128,23 @@ def check_shedding(
     return False
 
 
+def get_stage_direct(api_url: str, attempts=20):
+    # We'll try x times
+    for x in range(attempts):
+        try:
+            req = urllib.request.urlopen(api_url, timeout=10)
+            stage_str = req.read().decode()
+            stage = int(stage_str) - 1  # The API has +1
+
+            logger_stage.info(f'{stage}')
+
+            return stage
+        except Exception as e:
+            logger.warning(str(e))
+    logger.error('Failure calling API, after {} attempts'.format(attempts))
+    exit()
+
+
 def get_stage_schedule(api_url: str, attempts=20):
     # We'll try x times
     for x in range(attempts):
@@ -163,7 +187,8 @@ if __name__ == "__main__":
             on rotate: base_filename = module.log.datetime
 
         Output of this function will then be:
-            switch_last_two_suffixes("module.log.datetime") -> module.datetime.log
+            switch_last_two_suffixes("module.log.datetime") ->
+            module.datetime.log
 
         Args:
             base_filename (str): _description_

@@ -83,7 +83,7 @@ def read_configuration_system(path):
         [dict]: System configuration dictionary
     """
     keys = ['LOGSTAGE', 'LOG', 'NOTIFICATION_TIMEOUT']
-    version = '0.2.0'
+    version = '0.2.1'
     return read_configuration_and_check(path, keys, 'system', version)
 
 
@@ -102,7 +102,8 @@ def read_configuration_user(path):
         [dict]: System configuration dictionary
     """
     keys = [
-        'API_URL', 'AREA', 'CMD', 'SCHEDULE_CSV', 'PAD_START', 'IGNORE_END',
+        'API_URL', 'AREA', 'QUERY_MODE', 'CMD',
+        'SCHEDULE_CSV', 'PAD_START', 'IGNORE_END',
         ]
-    version = '0.2.0'
+    version = '0.2.1'
     return read_configuration_and_check(path, keys, 'user', version)

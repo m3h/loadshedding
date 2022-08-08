@@ -1,10 +1,18 @@
 # Configuration file version
-VERSION: '0.2.0'
+VERSION: '0.2.1'
 
 # Loadshedding area
 # Should correspond to the areas beneath the stages in the SCHEDULE_CSV file
 # Area names are those of the original source documentation
 AREA: '<AREA>'
+# Query Mode
+# DIRECT to directly query the current stage from the Eskom API
+# The following settings are applicable:
+#   API_URL: https://loadshedding.eskom.co.za/LoadShedding/GetStatus
+# LOADSHEDDING_THINGAMABOB to query a stage schedule .csv from the cloud
+# The following settings are applicable:
+#   API_URL: <AWS Lambda Gateway URL>
+QUERY_MODE: <QUERY_MODE>
 # Loadshedding schedule
 SCHEDULE_CSV: '<PATH_TO_SCHEDULE.CSV>'
 # API Address to get loadshedding stage
