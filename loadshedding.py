@@ -230,8 +230,29 @@ if __name__ == "__main__":
     logger_crash = get_crash_logger()
 
     try:
+        import argparse
+
+        parser = argparse.ArgumentParser(
+            description='Automatic hibernate during loadshedding'
+            )
+        parser.add_argument(
+            '--configuration_system', type=str,
+            default='configuration_system.yaml',
+            help='Path to the system configuration file.'
+            )
+        parser.add_argument(
+            '--configuration_user', type=str,
+            default='configuration_user.yaml',
+            help='Path to the user configuration file.'
+            )
+        args = parser.parse_args()
+    except Exception as e:
+        logger_crash.exception(e)
+        exit()
+
+    try:
         configuration_system = configuration.read_configuration_system(
-            'configuration_system.yaml')
+            args.configuration_system)
     except FileNotFoundError as e:
 
         message = f'Configuration file does not exist\n\t{str(e)}'
@@ -247,7 +268,7 @@ if __name__ == "__main__":
 
     try:
         configuration_user = configuration.read_configuration_user(
-            'configuration_user.yaml')
+            args.configuration_user)
     except FileNotFoundError as e:
         message = f'Configuration file does not exist\n\t{str(e)}'
         logger.critical(message)
