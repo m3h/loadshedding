@@ -26,7 +26,7 @@ def main(
     date_now = datetime.now()
 
     if configuration_user['QUERY_MODE'].lower() == 'direct':
-        stage_current = get_stage_direct(configuration_system['API_URL'])
+        stage_current = get_stage_direct(configuration_user['API_URL'])
     elif configuration_user['QUERY_MODE'].lower() == \
             'loadshedding_thingamabob':
         response = get_stage_schedule(configuration_user['API_URL'])
