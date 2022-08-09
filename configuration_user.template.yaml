@@ -1,5 +1,5 @@
 # Configuration file version
-VERSION: '0.2.1'
+VERSION: '0.2.2'
 
 # Loadshedding area
 # Should correspond to the areas beneath the stages in the SCHEDULE_CSV file
@@ -36,3 +36,8 @@ PAD_START: 17 # minutes
 # Used to create a deadzone in case the power is restored earlier than the
 # schedule indicates
 IGNORE_END: 30 # minutes
+
+# Check if this script has already run the loadshedding command (CMD) during
+# this loadshedding block
+# If so, don't run the command again
+RAN_CHECK: True
