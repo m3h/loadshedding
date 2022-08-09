@@ -50,7 +50,7 @@ def read_configuration_and_check(
         [dict]: Configuration dictionary
     """
     def version_split(version: str):
-        return tuple(int(x) for x in v.split('.'))
+        return tuple(int(x) for x in version.split('.'))
 
     configuration = read_configuration(path)
 
