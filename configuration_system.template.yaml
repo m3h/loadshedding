@@ -1,10 +1,12 @@
 # Configuration file version
-VERSION: '0.2.1'
+VERSION: '0.2.2'
 
 # Timestamped stage logfile
 LOGSTAGE: "stage.log"
 # Action and crash logfile
 LOG: "log.log"
+# Ran
+LOGRAN: "ran.log"
 
 # GUI Notication timeout
 NOTIFICATION_TIMEOUT: 120

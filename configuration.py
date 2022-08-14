@@ -84,8 +84,8 @@ def read_configuration_system(path):
     Returns:
         [dict]: System configuration dictionary
     """
-    keys = ['LOGSTAGE', 'LOG', 'NOTIFICATION_TIMEOUT']
-    version = '0.2.1'
+    keys = ['LOGSTAGE', 'LOG', 'LOGRAN', 'NOTIFICATION_TIMEOUT']
+    version = '0.2.2'
     return read_configuration_and_check(path, keys, 'system', version)
 
 
