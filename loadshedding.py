@@ -50,13 +50,13 @@ def main(
     transforms = {
         'stage': lambda x: int(x)
     }
-    sched = lutils.lcsv.read_csv(configuration_user['SCHEDULE_CSV'],
+    schedule = lutils.lcsv.read_csv(configuration_user['SCHEDULE_CSV'],
                                  transforms=transforms,
                                  delimiter=';')
 
     shedding = check_shedding(
-        stage_current, sched,
-        configuration_user, configuration_system,
+        stage_current, schedule,
+        configuration_user,
         date_now
     )
 
@@ -144,13 +144,13 @@ def check_row(row, date_now, tomorrow, configuration_user):
 
 
 def check_shedding(
-        curr_stage, sched, configuration_user, configuration_system, date_now):
+        stage_current, schedule, configuration_user, date_now):
     day = str(date_now.day)
     date_tomorrow = date_now + timedelta(days=1)
     day_tomorrow = str(date_tomorrow.day)
 
-    for row in sched:
-        if not row['stage'] <= curr_stage:
+    for row in schedule:
+        if not row['stage'] <= stage_current:
             continue
 
         if (row[day] == str(configuration_user['AREA']) and

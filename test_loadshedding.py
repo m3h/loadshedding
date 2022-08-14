@@ -166,13 +166,13 @@ class TestCheckShedding(unittest.TestCase):
         transforms = {
             'stage': lambda x: int(x)
         }
-        sched = lutils.lcsv.read_csv(configuration_user['SCHEDULE_CSV'],
-                                     transforms=transforms,
-                                     delimiter=';')
+        schedule = lutils.lcsv.read_csv(configuration_user['SCHEDULE_CSV'],
+                                        transforms=transforms,
+                                        delimiter=';')
 
         self.configuration_system = configuration_system
         self.configuration_user = configuration_user
-        self.schedule = sched
+        self.schedule = schedule
 
     def check_case(self, test):
         """Check a specific test case tuple for correctness
@@ -187,7 +187,7 @@ class TestCheckShedding(unittest.TestCase):
         expected_status = test[3]
 
         status = check_shedding(stage, self.schedule, self.configuration_user,
-                                self.configuration_system, datetime_test)
+                                datetime_test)
 
         self.assertIs(status, expected_status, test)
 
@@ -235,7 +235,7 @@ class TestCheckShedding(unittest.TestCase):
                 with self.subTest(i=i, date=str(datetime_test.date)):
                     shedding = check_shedding(
                         0, self.schedule, self.configuration_user,
-                        self.configuration_system, datetime_test)
+                        datetime_test)
                     self.assertFalse(shedding)
 
     def test_select(self):
