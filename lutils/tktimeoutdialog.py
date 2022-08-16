@@ -41,6 +41,7 @@ class TkTimeoutDialog():
             Blocking function that shows a notification to the user and
             gets input.
     """
+
     def __init__(self):
         self.affirmative = False
         self.reason = "__init__"
