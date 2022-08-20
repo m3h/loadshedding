@@ -28,3 +28,5 @@ Install the remaining dependencies from the `requirements.txt`
 ```
 pip install -r requirements.txt
 ```
+
+**Alternatively, you may use the install script provided at the root of this project.**
