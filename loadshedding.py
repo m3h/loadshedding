@@ -50,28 +50,93 @@ def main(
     transforms = {
         'stage': lambda x: int(x)
     }
-    sched = lutils.lcsv.read_csv(configuration_user['SCHEDULE_CSV'],
-                                 transforms=transforms,
-                                 delimiter=';')
+    schedule = lutils.lcsv.read_csv(configuration_user['SCHEDULE_CSV'],
+                                    transforms=transforms,
+                                    delimiter=';')
 
     shedding = check_shedding(
-        stage_current, sched,
-        configuration_user, configuration_system,
+        stage_current, schedule,
+        configuration_user,
         date_now
     )
 
     if not shedding:
+        try:
+            if (configuration_user['RAN_CHECK']):
+                if os.path.exists(configuration_system['LOGRAN']):
+                    os.remove(configuration_system['LOGRAN'])
+        except Exception as e:
+            logger.exception(e)
         logger.info('status: not shedding any loads')
         return False
 
+    # Override RAN Check
+    # In a very lenient try-except block, if fails it shouldn't block the
+    #   expected behaviour (e.g. running the command)
+    override_ran = False
+    try:
+        if (configuration_user['RAN_CHECK']):
+            if os.path.exists(configuration_system['LOGRAN']):
+                with open(configuration_system['LOGRAN'], 'r') as f:
+                    area_ran, datetime_ran, stage_ran = \
+                        f.read().strip().split(';')
+                area_ran = str(area_ran)
+                datetime_ran = datetime.fromisoformat(datetime_ran)
+                stage_ran = int(stage_ran)
+
+                blocks_ran = set(blocks_shedding(
+                    stage_ran, schedule,
+                    configuration_user,
+                    datetime_ran
+                ))
+                blocks_current = set(blocks_shedding(
+                    stage_current, schedule,
+                    configuration_user,
+                    date_now
+                ))
+
+                # Dont run the loadshedding command if:
+                # (1) the area is the same and
+                # (2) there is some overlap between the blocks for which the
+                #   command previously ran and the current triggered blocks
+                # (3) And the difference between the previous trigger and this
+                #   trigger is less than a day. This handles cases where the
+                #   device is only turned on on the same day of the following
+                #   month and it is still loadshedding
+                if (area_ran == str(configuration_user['AREA']) and
+                            blocks_ran.intersection(blocks_current) and
+                            (date_now - datetime_ran < timedelta(days=1))
+                        ):
+                    override_ran = True
+
+            if not override_ran:
+                with open(configuration_system['LOGRAN'], 'w') as f:
+                    f.write(
+                        f'{configuration_user["AREA"]}'
+                        f';{date_now.isoformat()}'
+                        f';{stage_current}'
+                    )
+    except Exception as e:
+        logger.exception(e)
+
+    if override_ran:
+        message = f'Cancelled by override ran check ({datetime_ran})'
+        logger.info(message)
+        return
+
+    # No overrides, just run the command
+    message = 'Executing loadshedding cmd "{}"'.format(
+        configuration_user['CMD'])
+    logger.info(message)
+
     if configuration_user['GUI_NOTIFICATION']:
-        override, reason = get_override_status(
+        override_gui, reason = get_override_status(
             configuration_system['NOTIFICATION_TIMEOUT'],
             "Loadshedding imminent!")
     else:
-        override, reason = False, None
+        override_gui, reason = False, None
 
-    if override:
+    if override_gui:
         message = 'User cancelled loadshedding ({}) cmd "{}"'.format(
             reason,
             configuration_user['CMD'])
@@ -107,25 +172,37 @@ def check_row(row, date_now, tomorrow, configuration_user):
     return False
 
 
-def check_shedding(
-        curr_stage, sched, configuration_user, configuration_system, date_now):
-    day = str(date_now.day)
-    date_tomorrow = date_now + timedelta(days=1)
+def iterate_shedding_blocks(
+        stage_current, schedule, configuration_user, date_check):
+    day = str(date_check.day)
+    date_tomorrow = date_check + timedelta(days=1)
     day_tomorrow = str(date_tomorrow.day)
 
-    for row in sched:
-        if not row['stage'] <= curr_stage:
+    for i, row in enumerate(schedule):
+        if not row['stage'] <= stage_current:
             continue
 
         if (row[day] == str(configuration_user['AREA']) and
-                check_row(row, date_now, False, configuration_user)):
-            return True
+                check_row(row, date_check, False, configuration_user)):
+            yield i, row['start'], row['end'], row['stage'], row[day]
 
         if (row[day_tomorrow] == str(configuration_user['AREA'])
-                and check_row(row, date_now, True, configuration_user)):
-            return True
+                and check_row(row, date_check, True, configuration_user)):
+            yield i, row['start'], row['end'], row['stage'], row[day_tomorrow]
 
-    return False
+
+def check_shedding(
+        stage_current, schedule, configuration_user, date_check):
+    return any(iterate_shedding_blocks(
+        stage_current, schedule, configuration_user, date_check
+    ))
+
+
+def blocks_shedding(
+        stage_current, schedule, configuration_user, date_check):
+    return list(iterate_shedding_blocks(
+        stage_current, schedule, configuration_user, date_check
+    ))
 
 
 def get_stage_direct(api_url: str, attempts=20):

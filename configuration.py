@@ -49,13 +49,15 @@ def read_configuration_and_check(
     Returns:
         [dict]: Configuration dictionary
     """
+    def version_split(version: str):
+        return tuple(int(x) for x in version.split('.'))
 
     configuration = read_configuration(path)
 
     for key in keys:
         if 'VERSION' not in configuration:
             raise VersionError('VERSION not specified in configuration file')
-        if configuration['VERSION'] != version:
+        if version_split(configuration['VERSION']) < version_split(version):
             raise VersionError(
                 'VERSION mismatch. '
                 f'Expected: {version} - Specified: {configuration["VERSION"]}'
@@ -82,8 +84,8 @@ def read_configuration_system(path):
     Returns:
         [dict]: System configuration dictionary
     """
-    keys = ['LOGSTAGE', 'LOG', 'NOTIFICATION_TIMEOUT']
-    version = '0.2.1'
+    keys = ['LOGSTAGE', 'LOG', 'LOGRAN', 'NOTIFICATION_TIMEOUT']
+    version = '0.2.2'
     return read_configuration_and_check(path, keys, 'system', version)
 
 
@@ -104,6 +106,7 @@ def read_configuration_user(path):
     keys = [
         'API_URL', 'AREA', 'QUERY_MODE', 'CMD',
         'SCHEDULE_CSV', 'PAD_START', 'IGNORE_END',
+        'RAN_CHECK',
     ]
-    version = '0.2.1'
+    version = '0.2.2'
     return read_configuration_and_check(path, keys, 'user', version)
