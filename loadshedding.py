@@ -10,13 +10,19 @@ import pathlib
 
 import configuration
 import lutils.lcsv
-import lutils.tktimeoutdialog
 
 
 def main(
         configuration_system: dict, configuration_user: dict,
         logger: logging.Logger, logger_stage: logging.Logger
 ):
+    if configuration_user['GUI_NOTIFICATION']:
+        # This is re-imported in lutils.tktimeoutdialog, if
+        # GUI_NOTIFICATION is enabled, and the system needs to shutdown.
+        # By importing it now, we hit issues with import Tk everytime we
+        # run the script (and have GUI notifications enabled), not only
+        # just before the system needs to shutdown...
+        import lutils.tktimeoutdialog
     logger.info(
         'Running loadshedding script: '
         f'configuration_system={configuration_system} '
