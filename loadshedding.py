@@ -22,7 +22,10 @@ def main(
         # By importing it now, we hit issues with import Tk everytime we
         # run the script (and have GUI notifications enabled), not only
         # just before the system needs to shutdown...
-        import lutils.tktimeoutdialog
+
+        # import with alias, otherwise using lutils.lcsv later on results
+        # in an UnboundLocalError
+        import lutils.tktimeoutdialog as _import_test
     logger.info(
         'Running loadshedding script: '
         f'configuration_system={configuration_system} '
@@ -250,6 +253,7 @@ def time_to_min(time: str):
 
 def get_override_status(timeout: int, dialog_msg: str):
 
+    import lutils.tktimeoutdialog
     dialog_notification = lutils.tktimeoutdialog.TkTimeoutDialog()
 
     shutdown, reason = dialog_notification.show_notification(

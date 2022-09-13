@@ -2,6 +2,8 @@
 
 import time
 
+import tkinter as tk
+
 
 class TkTimeoutDialog():
     """
@@ -73,9 +75,6 @@ class TkTimeoutDialog():
                 the action (possibly via a timeout). The str contains the
                 reason for the bool.
         """
-
-        # Tk is an optional dependency, so only import it if it's needed
-        import tkinter as tk
 
         self.affirmative = False
         self.reason = "Dialog Termination"
