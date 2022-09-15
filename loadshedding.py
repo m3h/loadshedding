@@ -297,6 +297,8 @@ if __name__ == "__main__":
         if not filename.suffix:
             filename = filename.with_suffix('.log')
 
+        filename.parent.mkdir(exist_ok=True, parents=True)
+
         logger_crash = logging.getLogger(name)
         logger_crash.setLevel(logging.DEBUG)
         ch = logging.StreamHandler()
