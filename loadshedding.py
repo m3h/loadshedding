@@ -25,7 +25,7 @@ def main(
 
         # import with alias, otherwise using lutils.lcsv later on results
         # in an UnboundLocalError
-        import lutils.tktimeoutdialog as _import_test
+        import lutils.tktimeoutdialog as _
     logger.info(
         'Running loadshedding script: '
         f'configuration_system={configuration_system} '
