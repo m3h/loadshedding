@@ -253,6 +253,8 @@ def time_to_min(time: str):
 
 def get_override_status(timeout: int, dialog_msg: str):
 
+    # only import when needed, so that Tk doesn't have to be a hard
+    # dependency
     import lutils.tktimeoutdialog
     dialog_notification = lutils.tktimeoutdialog.TkTimeoutDialog()
 
