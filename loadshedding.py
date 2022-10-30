@@ -10,13 +10,22 @@ import pathlib
 
 import configuration
 import lutils.lcsv
-import lutils.tktimeoutdialog
 
 
 def main(
         configuration_system: dict, configuration_user: dict,
         logger: logging.Logger, logger_stage: logging.Logger
 ):
+    if configuration_user['GUI_NOTIFICATION']:
+        # This is re-imported in lutils.tktimeoutdialog, if
+        # GUI_NOTIFICATION is enabled, and the system needs to shutdown.
+        # By importing it now, we hit issues with import Tk everytime we
+        # run the script (and have GUI notifications enabled), not only
+        # just before the system needs to shutdown...
+
+        # import with alias, otherwise using lutils.lcsv later on results
+        # in an UnboundLocalError
+        import lutils.tktimeoutdialog as _
     logger.info(
         'Running loadshedding script: '
         f'configuration_system={configuration_system} '
@@ -244,6 +253,9 @@ def time_to_min(time: str):
 
 def get_override_status(timeout: int, dialog_msg: str):
 
+    # only import when needed, so that Tk doesn't have to be a hard
+    # dependency
+    import lutils.tktimeoutdialog
     dialog_notification = lutils.tktimeoutdialog.TkTimeoutDialog()
 
     shutdown, reason = dialog_notification.show_notification(
@@ -286,6 +298,8 @@ if __name__ == "__main__":
         filename = pathlib.Path(filename)
         if not filename.suffix:
             filename = filename.with_suffix('.log')
+
+        filename.parent.mkdir(exist_ok=True, parents=True)
 
         logger_crash = logging.getLogger(name)
         logger_crash.setLevel(logging.DEBUG)
