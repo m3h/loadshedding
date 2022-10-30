@@ -222,6 +222,10 @@ def get_stage_direct(api_url: str, attempts=20):
             stage_str = req.read().decode()
             stage = int(stage_str) - 1  # The API has +1
 
+            if stage < 0:
+                # The API often returns negative numbers. Try again till
+                # we get a valid response
+                raise Exception(f"Invalid negative stage! {stage}")
             logger_stage.info(f'{stage}')
 
             return stage
