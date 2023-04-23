@@ -38,6 +38,9 @@ def main(
         stage_current = get_stage_direct(configuration_user['API_URL'])
     elif configuration_user['QUERY_MODE'].lower() == \
             'loadshedding_thingamabob':
+        import zoneinfo
+        date_now = date_now.replace(tzinfo=zoneinfo.ZoneInfo('localtime'))
+
         response = get_stage_schedule(configuration_user['API_URL'])
         logger_stage.info(f'{response}')
 
@@ -46,14 +49,15 @@ def main(
         stage_schedule_csv = json.loads(response)['schedule_csv']
         stage_schedule = \
             loadshedding_thingamabob.schedule.Schedule.from_string(
-                stage_schedule_csv
+                stage_schedule_csv,
+                timezone=response['timezone'] if 'timezone' in response else 'Africa/Johannesburg',
             )
-        logger.info(f'stage_schedule: {stage_schedule}')
+        logger.info(f'stage_schedule:\n{stage_schedule}')
 
         # Get current stage
         date_soon = \
             date_now + timedelta(minutes=configuration_user['PAD_START'])
-        stage_current = stage_schedule.stage(date_soon.timestamp())
+        stage_current = stage_schedule.stage(date_soon)
     logger.info(f'stage_current: {stage_current}')
 
     transforms = {
