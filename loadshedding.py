@@ -6,7 +6,7 @@ import os
 import urllib.request
 import json
 import pathlib
-
+import zoneinfo
 
 import configuration
 import lutils.lcsv
@@ -32,15 +32,14 @@ def main(
         f'configuration_user={configuration_user} '
     )
 
-    date_now = datetime.now()
+    # Get the current datetime in the 'Africa/Johannesburg' timezone
+    # But remove the timezone info, since the rest of the script is not timezone aware
+    date_now = datetime.now(tz=zoneinfo.ZoneInfo('Africa/Johannesburg')).replace(tzinfo=None)
 
     if configuration_user['QUERY_MODE'].lower() == 'direct':
         stage_current = get_stage_direct(configuration_user['API_URL'])
     elif configuration_user['QUERY_MODE'].lower() == \
             'loadshedding_thingamabob':
-        import zoneinfo
-        date_now = date_now.replace(tzinfo=zoneinfo.ZoneInfo('localtime'))
-
         response = get_stage_schedule(configuration_user['API_URL'])
         logger_stage.info(f'{response}')
 
@@ -56,8 +55,8 @@ def main(
         logger.info(f'stage_schedule:\n{stage_schedule}')
 
         # Get current stage
-        date_soon = \
-            date_now + timedelta(minutes=configuration_user['PAD_START'])
+        date_soon = date_now + timedelta(minutes=configuration_user['PAD_START'])
+        date_soon = date_soon.replace(tzinfo=zoneinfo.ZoneInfo('Africa/Johannesburg'))
         stage_current = stage_schedule.stage(date_soon)
     logger.info(f'stage_current: {stage_current}')
 
