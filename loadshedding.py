@@ -46,11 +46,12 @@ def main(
 
         # Build schedule
         import loadshedding_thingamabob.schedule
-        stage_schedule_csv = json.loads(response)['schedule_csv']
+        response_d = json.loads(response)
+        stage_schedule_csv = response_d['schedule_csv']
         stage_schedule = \
             loadshedding_thingamabob.schedule.Schedule.from_string(
                 stage_schedule_csv,
-                timezone=response['timezone'] if 'timezone' in response else 'Africa/Johannesburg',
+                timezone=response_d['timezone'] if 'timezone' in response_d else 'Africa/Johannesburg',
             )
         logger.info(f'stage_schedule:\n{stage_schedule}')
 
