@@ -320,6 +320,7 @@ if __name__ == "__main__":
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(
             logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        fh.namer = switch_last_two_suffixes
         logger_crash.addHandler(fh)
         return logger_crash
 
