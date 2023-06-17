@@ -276,32 +276,6 @@ def get_override_status(timeout: int, dialog_msg: str):
 
 
 if __name__ == "__main__":
-    def switch_last_two_suffixes(base_filename: str):
-        """Switch the last two suffixes of the filename
-        Used in TimedRotatingFileHandler as .namer
-            to switch fix the filename upon rotating, e.g.
-            filename = module.log
-            on rotate: base_filename = module.log.datetime
-
-        Output of this function will then be:
-            switch_last_two_suffixes("module.log.datetime") ->
-            module.datetime.log
-
-        Args:
-            base_filename (str): _description_
-
-        Returns:
-            _type_: _description_
-        """
-        base_filename = pathlib.PurePath(base_filename)
-        parent = base_filename.parent
-        name = base_filename.name.split('.')
-        assert len(name) >= 2
-
-        name = '.'.join(name[:-2] + [name[-1], name[-2]])
-
-        return str(parent / name)
-
     def get_logger(name, filename):
         filename = pathlib.Path(filename)
         if not filename.suffix:
@@ -315,12 +289,11 @@ if __name__ == "__main__":
         ch.setLevel(logging.DEBUG)
         logger_crash.addHandler(ch)
         fh = logging.handlers.TimedRotatingFileHandler(
-            filename, when="midnight"
+            filename, when="midnight", backupCount=30,  # Manually set backup count for testing
         )
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(
             logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-        fh.namer = switch_last_two_suffixes
         logger_crash.addHandler(fh)
         return logger_crash
 
