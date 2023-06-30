@@ -6,7 +6,7 @@ import os
 import urllib.request
 import json
 import pathlib
-
+import zoneinfo
 
 import configuration
 import lutils.lcsv
@@ -32,7 +32,9 @@ def main(
         f'configuration_user={configuration_user} '
     )
 
-    date_now = datetime.now()
+    # Get the current datetime in the 'Africa/Johannesburg' timezone
+    # But remove the timezone info, since the rest of the script is not timezone aware
+    date_now = datetime.now(tz=zoneinfo.ZoneInfo('Africa/Johannesburg')).replace(tzinfo=None)
 
     if configuration_user['QUERY_MODE'].lower() == 'direct':
         stage_current = get_stage_direct(configuration_user['API_URL'])
@@ -43,17 +45,19 @@ def main(
 
         # Build schedule
         import loadshedding_thingamabob.schedule
-        stage_schedule_csv = json.loads(response)['schedule_csv']
+        response_d = json.loads(response)
+        stage_schedule_csv = response_d['schedule_csv']
         stage_schedule = \
             loadshedding_thingamabob.schedule.Schedule.from_string(
-                stage_schedule_csv
+                stage_schedule_csv,
+                timezone=response_d['timezone'] if 'timezone' in response_d else 'Africa/Johannesburg',
             )
-        logger.info(f'stage_schedule: {stage_schedule}')
+        logger.info(f'stage_schedule:\n{stage_schedule}')
 
         # Get current stage
-        date_soon = \
-            date_now + timedelta(minutes=configuration_user['PAD_START'])
-        stage_current = stage_schedule.stage(date_soon.timestamp())
+        date_soon = date_now + timedelta(minutes=configuration_user['PAD_START'])
+        date_soon = date_soon.replace(tzinfo=zoneinfo.ZoneInfo('Africa/Johannesburg'))
+        stage_current = stage_schedule.stage(date_soon)
     logger.info(f'stage_current: {stage_current}')
 
     transforms = {
@@ -272,32 +276,6 @@ def get_override_status(timeout: int, dialog_msg: str):
 
 
 if __name__ == "__main__":
-    def switch_last_two_suffixes(base_filename: str):
-        """Switch the last two suffixes of the filename
-        Used in TimedRotatingFileHandler as .namer
-            to switch fix the filename upon rotating, e.g.
-            filename = module.log
-            on rotate: base_filename = module.log.datetime
-
-        Output of this function will then be:
-            switch_last_two_suffixes("module.log.datetime") ->
-            module.datetime.log
-
-        Args:
-            base_filename (str): _description_
-
-        Returns:
-            _type_: _description_
-        """
-        base_filename = pathlib.PurePath(base_filename)
-        parent = base_filename.parent
-        name = base_filename.name.split('.')
-        assert len(name) >= 2
-
-        name = '.'.join(name[:-2] + [name[-1], name[-2]])
-
-        return str(parent / name)
-
     def get_logger(name, filename):
         filename = pathlib.Path(filename)
         if not filename.suffix:
@@ -311,7 +289,7 @@ if __name__ == "__main__":
         ch.setLevel(logging.DEBUG)
         logger_crash.addHandler(ch)
         fh = logging.handlers.TimedRotatingFileHandler(
-            filename, when="midnight"
+            filename, when="midnight", backupCount=30,  # Manually set backup count for testing
         )
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(
